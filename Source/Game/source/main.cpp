@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "GameWorld.h"
+#include "tge\input\InputManager.h"
 
 void Go(void);
 
@@ -8,12 +9,15 @@ int main(const int /*argc*/, const char* /*argc*/[])
 	Go();
 	return 0;
 }
-
+Tga::InputManager* myInputManeger;
+HWND myHWnd;
 LRESULT WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	
+	myInputManeger->UpdateEvents(message, wParam, lParam);
 	lParam;
 	wParam;
-	hWnd;
+	myHWnd=hWnd;
 	switch (message)
 	{
 		// this message is read when the window is closed
@@ -32,7 +36,7 @@ LRESULT WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 void Go()
 {
 	Tga::LoadSettings(TGE_PROJECT_SETTINGS_FILE);
-
+	myInputManeger = new Tga::InputManager(myHWnd);
 	Tga::EngineConfiguration winconf;
 	
 	winconf.myApplicationName = L"TGE - Amazing Game";
@@ -58,7 +62,8 @@ void Go()
 
 		while (engine.BeginFrame()) {
 			gameWorld.Update(engine.GetDeltaTime());
-			gameWorld.Render();
+			myInputManeger->Update();
+			gameWorld.Render(myInputManeger);
 
 			engine.EndFrame();
 		}

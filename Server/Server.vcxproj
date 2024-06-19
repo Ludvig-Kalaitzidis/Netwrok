@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)NetShared\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)NetShared\;..\Source\External;..\Source\Engine;..\Source\Game\tools;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,6 +130,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Local\Engine.vcxproj">
+      <Project>{dbc7d3b0-c769-fe86-b024-12db9c6585d7}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Local\External.vcxproj">
+      <Project>{089db854-f469-1360-1d83-010809af48ee}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

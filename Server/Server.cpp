@@ -4,6 +4,7 @@
 #include <vector>
 #include "NetMessage.h"
 #include <unordered_map>
+#include <tge\math\Vector.h>
 #pragma comment (lib, "ws2_32.lib")
 
 using namespace std;
@@ -18,6 +19,7 @@ struct ClientInfo
 	sockaddr_in address;
 	std::string name;
 	int clientId;
+	
 };
 void DeleteTheClient(const SOCKET& aServerSocket, const int aClientID);
 void AddNewClient(const SOCKET& aServerSocket, const sockaddr_in& aClientAddress, ChatMessage* aClientMessage);
@@ -88,9 +90,11 @@ int main()
 		
 
 		//Echo the message back
+		
 		sendto(listeningSocket, buffer, BUFFER_SIZE, 0, (sockaddr*)&clientAddress, sizeof(clientAddress));
 
 		//Display (name + client) message and send them to all connected clients
+	
 		std::string wholeMessage = connectedClients[clientMessage->GetClientID()].name + ": " + clientMessage->GetClientMessage();
 		clientMessage->SetMessage(wholeMessage.c_str());
 		for (const auto& client : connectedClients)
@@ -101,8 +105,16 @@ int main()
 			}
 		}
 
-		//display the message on server
+		
+		if ((MessageType)buffer[0] == MessageType::ePositsionMessage)
+		{
+
+		}
+		else
+		{
 		std::cout << clientMessage->GetClientMessage() << std::endl;
+
+		}//display the message on server
 	}
 
 	// close socket 
@@ -167,6 +179,11 @@ void AddNewClient(const SOCKET& aServerSocket, const sockaddr_in& aClientAddress
 	{
 		sendto(aServerSocket, NewClientBuffer, BUFFER_SIZE, 0, (sockaddr*)&entry.second.address, sizeof(entry.second.address));
 	}
+
+	//char NewNewClientBuffer[BUFFER_SIZE];
+	//FirstMessage connectedClientsMessage;
+	//connectedClientsMessage.SetConnectedClients(connectedClients);
+	//sendto(aServerSocket, NewNewClientBuffer, BUFFER_SIZE, 0, (sockaddr*)&newClientInfo.address, sizeof(newClientInfo.address));
 
 	clientID++;
 }

@@ -1,11 +1,12 @@
 #pragma once
 #include <string>
-
+#include <tge\math\Vector.h>
 enum MessageType :unsigned char
 {
 	eNone,
 	eChatMessage,
-	eInfoMessage
+	eInfoMessage,
+	ePositsionMessage
 };
 
 
@@ -13,7 +14,7 @@ enum MessageState :unsigned char
 {
 	FirstSend,
 	LastSend,
-	None,
+	None
 };
 
 
@@ -25,6 +26,17 @@ protected:
 	NetMessage() = default;
 };
 
+
+class FirstMessage : public NetMessage
+{
+public:
+	void SetConnectedClients(std::unordered_map<int, ClientInfo> allClients)
+	{
+		connectedClients = allClients;
+	}
+private:
+	std::unordered_map<int, ClientInfo> connectedClients;
+};
 
 class ChatMessage : public NetMessage
 {
@@ -41,10 +53,17 @@ public:
 	{
 		myID = anID;
 	};
+	void SetPosition(const Tga::Vector2f& aPosition)
+	{
+		positsion = aPosition;
+	}
 	void SetState(MessageState aState) { myState = aState; };
+	void ChangeMessageType(MessageType aMessageType) { myType = aMessageType; };
 	const char* GetClientMessage() const { return myMessage; };
 	int GetClientID() { return myID; };
+	Tga::Vector2f GetPosition() {return positsion;}
 private:
 	int myID = -1;
-	char myMessage[512] = {};
+	char myMessage[256] = {};
+	Tga::Vector2f positsion;
 };
