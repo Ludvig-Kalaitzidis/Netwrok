@@ -21,10 +21,18 @@ struct ClientInfo
 	int clientId;
 	
 };
+//
+struct ClientGameInfo
+{
+	Tga::Vector2f position;
+};
+
+
 void DeleteTheClient(const SOCKET& aServerSocket, const int aClientID);
 void AddNewClient(const SOCKET& aServerSocket, const sockaddr_in& aClientAddress, ChatMessage* aClientMessage);
 //client port till clientInfo
 std::unordered_map<int, ClientInfo> connectedClients;
+std::unordered_map<int, ClientGameInfo> connectedClientsPosition;
 
 int main()
 {
@@ -108,7 +116,7 @@ int main()
 		
 		if ((MessageType)buffer[0] == MessageType::ePositsionMessage)
 		{
-
+			connectedClientsPosition[clientMessage->GetClientID()].position = clientMessage->GetPosition();
 		}
 		else
 		{
@@ -180,10 +188,14 @@ void AddNewClient(const SOCKET& aServerSocket, const sockaddr_in& aClientAddress
 		sendto(aServerSocket, NewClientBuffer, BUFFER_SIZE, 0, (sockaddr*)&entry.second.address, sizeof(entry.second.address));
 	}
 
-	//char NewNewClientBuffer[BUFFER_SIZE];
-	//FirstMessage connectedClientsMessage;
-	//connectedClientsMessage.SetConnectedClients(connectedClients);
-	//sendto(aServerSocket, NewNewClientBuffer, BUFFER_SIZE, 0, (sockaddr*)&newClientInfo.address, sizeof(newClientInfo.address));
+
+	connectedClientsPosition[clientID].position = {};
+
+	char NewNewClientBuffer[BUFFER_SIZE];
+	FirstMessage connectedClientsMessage;
+	connectedClientsMessage.SetConnectedClients(connectedClients);
+	memcpy(NewNewClientBuffer, &connectedClientsMessage, BUFFER_SIZE);
+	sendto(aServerSocket, NewNewClientBuffer, BUFFER_SIZE, 0, (sockaddr*)&newClientInfo.address, sizeof(newClientInfo.address));
 
 	clientID++;
 }

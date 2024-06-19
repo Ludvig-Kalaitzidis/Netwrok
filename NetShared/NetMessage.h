@@ -1,12 +1,14 @@
 #pragma once
 #include <string>
 #include <tge\math\Vector.h>
+
 enum MessageType :unsigned char
 {
 	eNone,
 	eChatMessage,
 	eInfoMessage,
-	ePositsionMessage
+	ePositsionMessage,
+	eFirstMessage
 };
 
 
@@ -30,12 +32,19 @@ protected:
 class FirstMessage : public NetMessage
 {
 public:
-	void SetConnectedClients(std::unordered_map<int, ClientInfo> allClients)
+	FirstMessage() { myType = MessageType::eFirstMessage; };
+	~FirstMessage() = default;
+
+	void SetConnectedClients(std::unordered_map<int, Tga::Vector2f> allClients)
 	{
 		connectedClients = allClients;
 	}
+	std::unordered_map<int, Tga::Vector2f> GetConnectedClients()
+	{
+		return connectedClients;
+	}
 private:
-	std::unordered_map<int, ClientInfo> connectedClients;
+	std::unordered_map<int, Tga::Vector2f> connectedClients;
 };
 
 class ChatMessage : public NetMessage

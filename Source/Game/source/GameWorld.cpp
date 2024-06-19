@@ -33,9 +33,10 @@ std::string inputText = "";
 std::vector<std::string> chatMessages;
 SOCKET ClientSocket;
 sockaddr_in serverAddress;
-bool ResiveFromServer(const SOCKET& aServerScoket, const sockaddr_in& aServerAddress);
-int Main(const std::string& name);
 
+
+
+int Main(const std::string& name);
 BOOL WINAPI HandlerRoutine(_In_ DWORD dwCtrlType);
 GameWorld::GameWorld() {}
 GameWorld::~GameWorld() {}
@@ -91,7 +92,7 @@ int Main(const std::string& name)
 		}
 	}
 
-	std::thread ReceiveFrom(&ResiveFromServer, ClientSocket, serverAddress);
+	std::thread ReceiveFrom(&GameWorld::ResiveFromServer, ClientSocket, serverAddress);
 	bool whileNotExit = true;
 	while (whileNotExit)
 	{
@@ -114,11 +115,11 @@ void GameWorld::Init()
 	{
 		sharedData.myTexture = engine.GetTextureManager().GetTexture(L"Sprites/tga_w.dds");
 
-		myTGELogoInstance.myPivot = { 0.5f, 0.5f };
-		myTGELogoInstance.myPosition = Tga::Vector2f{ 0.5f, 0.5f }*resolution;
-		myTGELogoInstance.mySize = Tga::Vector2f{ 0.75f, 0.75f }*resolution.y;
+		mySpriteInstance.myPivot = { 0.5f, 0.5f };
+		mySpriteInstance.myPosition = Tga::Vector2f{ 0.5f, 0.5f }*resolution;
+		mySpriteInstance.mySize = Tga::Vector2f{ 0.75f, 0.75f }*resolution.y;
 
-		myTGELogoInstance.myColor = Tga::Color(1, 1, 1, 1);
+		mySpriteInstance.myColor = Tga::Color(1, 1, 1, 1);
 	}
 
 }
@@ -136,12 +137,16 @@ void GameWorld::Render(Tga::InputManager* aInput)
 
 	auto& engine = *Tga::Engine::GetInstance();
 	Tga::SpriteDrawer& spriteDrawer(engine.GetGraphicsEngine().GetSpriteDrawer());
-	spriteDrawer.Draw(sharedData, myTGELogoInstance);
+	for (size_t i = 0; i < myOtherClientsSprites.size(); i++)
+	{
+		spriteDrawer.Draw(sharedData, myOtherClientsSprites[i]);
+	}
+	spriteDrawer.Draw(sharedData, mySpriteInstance);
 
 	if (aInput->IsKeyPressed('W')|| aInput->IsKeyPressed('A') || aInput->IsKeyPressed('S') || aInput->IsKeyPressed('D'))
 	{
 		ChatMessage message;
-		message.SetPosition(myTGELogoInstance.myPosition);
+		message.SetPosition(mySpriteInstance.myPosition);
 		message.SetID(globalID);
 		message.ChangeMessageType(ePositsionMessage);
 
@@ -218,7 +223,7 @@ bool GameWorld::AskForName()
 }
 
 
-bool ResiveFromServer(const SOCKET& aServerScoket, const sockaddr_in& aServerAddress)
+bool GameWorld::ResiveFromServer(const SOCKET& aServerScoket, const sockaddr_in& aServerAddress)
 {
 	int sreverLength = sizeof(aServerAddress);
 	char InBuffer[BUFFER_SIZE] = {};
@@ -242,6 +247,15 @@ bool ResiveFromServer(const SOCKET& aServerScoket, const sockaddr_in& aServerAdd
 		{
 			ChatMessage* serverMessage = reinterpret_cast<ChatMessage*>(&InBuffer);
 			std::cout << "ID: " << serverMessage->GetClientID() << ", x: " << serverMessage->GetPosition().myX << ", y: " << serverMessage->GetPosition().myY << std::endl;
+		}
+
+		if ((MessageType)InBuffer[0] == MessageType::eFirstMessage)
+		{
+			FirstMessage* serverMessage = reinterpret_cast<FirstMessage*>(&InBuffer);
+			for (size_t i = 0; i < serverMessage->GetConnectedClients().size(); i++)
+			{
+				myOtherClientsSprites.push_back(serverMessage->GetConnectedClients()[i]);
+			}
 		}
 
 		else
