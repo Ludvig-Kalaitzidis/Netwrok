@@ -37,6 +37,7 @@ Tga::SpriteSharedData sharedData = {};
 
 
 SOCKET ClientSocket;
+int connectedClientSize;
 sockaddr_in serverAddress;
 bool ResiveFromServer(const SOCKET& aServerScoket, const sockaddr_in& aServerAddress);
 int Main(const std::string& name);
@@ -92,11 +93,12 @@ int Main(const std::string& name)
 		if ((MessageType)InBuffer[1] == MessageState::FirstSend)
 		{
 			globalID = serverMessage->GetClientID();
-			for (const auto& transform: serverMessage->GetAllClinets())
+
+			for (int i = 0; i < serverMessage->GetConnectedClientSize(); i++)
 			{
-				myTGELogoInstance[transform.myID].myPosition = transform.myPosition;
+				myTGELogoInstance[serverMessage->GetAllClinets()[i].myID].myPosition = serverMessage->GetAllClinets()[i].myPosition;
 			}
-			std::cout << "Client have connected" << std::endl;
+			connectedClientSize = serverMessage->GetConnectedClientSize();
 		}
 	}
 
@@ -127,7 +129,7 @@ void GameWorld::Init()
 
 		instance.myPivot = { 0.5f, 0.5f };
 		instance.myPosition = Tga::Vector2f{ 0.5f, 0.5f }*resolution;
-		instance.mySize = Tga::Vector2f{ 0.75f, 0.75f }*resolution.y;
+		instance.mySize = Tga::Vector2f{ 0.15f, 0.15f }*resolution.y;
 
 		instance.myColor = Tga::Color(1, 1, 1, 1);
 	}
@@ -148,13 +150,32 @@ void GameWorld::Render(Tga::InputManager* aInput)
 	auto& engine = *Tga::Engine::GetInstance();
 	Tga::SpriteDrawer& spriteDrawer(engine.GetGraphicsEngine().GetSpriteDrawer());
 
-	for (auto& instance : myTGELogoInstance)
+	for (int i=0;i< connectedClientSize;i++)
 	{
-		spriteDrawer.Draw(sharedData, instance);
+		spriteDrawer.Draw(sharedData, myTGELogoInstance[i]);
 	};
 
-	if (aInput->IsKeyPressed('W')|| aInput->IsKeyPressed('A') || aInput->IsKeyPressed('S') || aInput->IsKeyPressed('D'))
+	if (aInput->IsKeyHeld('W')|| aInput->IsKeyHeld('A') || aInput->IsKeyHeld('S') || aInput->IsKeyHeld('D'))
 	{
+		if (aInput->IsKeyHeld('W'))
+		{
+			myTGELogoInstance[globalID].myPosition.y += moveSize;
+		}
+		if (aInput->IsKeyHeld('S'))
+		{
+			myTGELogoInstance[globalID].myPosition.y -= moveSize;
+		}
+		if (aInput->IsKeyHeld('A'))
+		{
+			myTGELogoInstance[globalID].myPosition.x -= moveSize;
+		}
+		if (aInput->IsKeyHeld('D'))
+		{
+			myTGELogoInstance[globalID].myPosition.x += moveSize;
+		}
+
+
+
 		ChatMessage message;
 		message.SetPosition(myTGELogoInstance[globalID].myPosition);
 		message.SetID(globalID);
@@ -256,7 +277,16 @@ bool ResiveFromServer(const SOCKET& aServerScoket, const sockaddr_in& aServerAdd
 		if ((MessageType)InBuffer[0] == MessageType::ePositsionMessage)
 		{
 			ChatMessage* serverMessage = reinterpret_cast<ChatMessage*>(&InBuffer);
-			std::cout << "ID: " << serverMessage->GetClientID() << ", x: " << serverMessage->GetPosition().myX << ", y: " << serverMessage->GetPosition().myY << std::endl;
+
+			for (int i = 0; i < serverMessage->GetConnectedClientSize(); i++)
+			{
+				if (serverMessage->GetAllClinets()[i].myID != globalID)
+				{
+					myTGELogoInstance[serverMessage->GetAllClinets()[i].myID].myPosition = serverMessage->GetAllClinets()[i].myPosition;
+				}
+
+			}
+			connectedClientSize = serverMessage->GetConnectedClientSize();
 		}
 
 		else

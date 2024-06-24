@@ -20,7 +20,7 @@ struct ClientInfo
 	std::string name;
 	int clientId;
 	Tga::Vector2f positsion;
-	
+
 };
 void DeleteTheClient(const SOCKET& aServerSocket, const int aClientID);
 void AddNewClient(const SOCKET& aServerSocket, const sockaddr_in& aClientAddress, ChatMessage* aClientMessage);
@@ -41,7 +41,8 @@ int main()
 
 	//Creat server socket
 	SOCKET listeningSocket = socket(AF_INET, SOCK_DGRAM, 0);
-	if (listeningSocket == INVALID_SOCKET) {
+	if (listeningSocket == INVALID_SOCKET)
+	{
 		std::cerr << "Failed to create listening socket." << std::endl;
 		return 1;
 	}
@@ -75,6 +76,7 @@ int main()
 		}
 
 		//When client is new
+
 		ChatMessage* clientMessage = reinterpret_cast<ChatMessage*>(&buffer);
 		if (clientMessage->GetClientID() == -1)
 		{
@@ -88,34 +90,60 @@ int main()
 			DeleteTheClient(listeningSocket, clientMessage->GetClientID());
 			continue;
 		}
-		
 
-		//Echo the message back
-		
-		sendto(listeningSocket, buffer, BUFFER_SIZE, 0, (sockaddr*)&clientAddress, sizeof(clientAddress));
-
-		//Display (name + client) message and send them to all connected clients
-	
-		std::string wholeMessage = connectedClients[clientMessage->GetClientID()].name + ": " + clientMessage->GetClientMessage();
-		clientMessage->SetMessage(wholeMessage.c_str());
-		for (const auto& client : connectedClients)
+		if ((MessageType)buffer[0] != MessageType::ePositsionMessage)
 		{
-			if (client.second.clientId != clientMessage->GetClientID())
+			//Echo the message back
+
+			sendto(listeningSocket, buffer, BUFFER_SIZE, 0, (sockaddr*)&clientAddress, sizeof(clientAddress));
+
+			//Display (name + client) message and send them to all connected clients
+
+			std::string wholeMessage = connectedClients[clientMessage->GetClientID()].name + ": " + clientMessage->GetClientMessage();
+			clientMessage->SetMessage(wholeMessage.c_str());
+			for (const auto& client : connectedClients)
 			{
-				sendto(listeningSocket, buffer, BUFFER_SIZE, 0, (sockaddr*)&client.second.address, sizeof(client.second.address));
+				if (client.second.clientId != clientMessage->GetClientID())
+				{
+					sendto(listeningSocket, buffer, BUFFER_SIZE, 0, (sockaddr*)&client.second.address, sizeof(client.second.address));
+				}
 			}
+
+			std::cout << clientMessage->GetClientMessage() << std::endl;
 		}
 
-		
 		if ((MessageType)buffer[0] == MessageType::ePositsionMessage)
 		{
+			//update the client position on the unordered map of connected clients and then send a vector of clientstransform to all clients
+			connectedClients[clientMessage->GetClientID()].positsion = clientMessage->GetPosition();
+
+
+			ChatMessage positionInfo;
+			positionInfo.SetState(MessageState::None);
+			positionInfo.ChangeMessageType(MessageType::ePositsionMessage);
+			positionInfo.AddConnectedClientSize(connectedClients.size());
+			char allClientsTrnaformBuffer[BUFFER_SIZE];
+
+			std::array<ClientTransform,4> allClients;
+			for (const auto& client : connectedClients)
+			{
+				ClientTransform clientTransform;
+				clientTransform.myID = client.second.clientId;
+				clientTransform.myPosition = client.second.positsion;
+				allClients[clientTransform.myID] = clientTransform;
+			}
+
+			positionInfo.SetAllClients(allClients);
+			memcpy(allClientsTrnaformBuffer, &positionInfo, BUFFER_SIZE);
+
+			for (const auto& client : connectedClients)
+			{
+				sendto(listeningSocket, allClientsTrnaformBuffer, BUFFER_SIZE, 0, (sockaddr*)&client.second.address, sizeof(client.second.address));
+			}
+
+
 
 		}
-		else
-		{
-		std::cout << clientMessage->GetClientMessage() << std::endl;
-
-		}//display the message on server
 	}
 
 	// close socket 
@@ -177,14 +205,15 @@ void AddNewClient(const SOCKET& aServerSocket, const sockaddr_in& aClientAddress
 	connectionInfo.SetMessage(messageToAllClients.c_str());
 	connectionInfo.SetID(clientID);
 	connectionInfo.SetState(MessageState::FirstSend);
+	connectionInfo.AddConnectedClientSize(connectedClients.size());
 
-	std::vector<ClientTransform> allClients;
-	for (const auto& client:connectedClients)
+	std::array<ClientTransform,4> allClients;
+	for (const auto& client : connectedClients)
 	{
 		ClientTransform clientTransform;
 		clientTransform.myID = client.second.clientId;
 		clientTransform.myPosition = client.second.positsion;
-		allClients.push_back(clientTransform);
+		allClients[clientTransform.myID]=clientTransform;
 	}
 
 	connectionInfo.SetAllClients(allClients);
@@ -194,9 +223,9 @@ void AddNewClient(const SOCKET& aServerSocket, const sockaddr_in& aClientAddress
 	{
 		sendto(aServerSocket, NewClientBuffer, BUFFER_SIZE, 0, (sockaddr*)&entry.second.address, sizeof(entry.second.address));
 	}
-	
 
-	
+
+
 
 	clientID++;
 }

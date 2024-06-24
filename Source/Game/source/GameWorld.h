@@ -14,6 +14,7 @@ public:
 
 private:
 	bool isFisrtMsg = true;
+	float moveSize = 1.f;
 
 
 };

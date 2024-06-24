@@ -52,23 +52,26 @@ public:
 	{
 		positsion = aPosition;
 	}
-	std::vector<ClientTransform> GetAllClinets()
+	std::array<ClientTransform,4> GetAllClinets()
 	{
 		return myClientTransforms;
 	}
-	void SetAllClients(const std::vector<ClientTransform>& aClients)
+	void SetAllClients(const std::array<ClientTransform,4>& aClients)
 	{
 		myClientTransforms = aClients;
 	}
 
-	void SetState(MessageState aState) { myState = aState; };
-	void ChangeMessageType(MessageType aMessageType) { myType = aMessageType; };
-	const char* GetClientMessage() const { return myMessage; };
+	void SetState(MessageState aState) { myState = aState; }
+	void ChangeMessageType(MessageType aMessageType) { myType = aMessageType; }
+	const char* GetClientMessage() const { return myMessage; }
+	void AddConnectedClientSize(int aSize) { conntectedClientSize= aSize; }
+	int GetConnectedClientSize() { return conntectedClientSize; }
 	int GetClientID() { return myID; };
 	Tga::Vector2f GetPosition() {return positsion;}
 private:
 	int myID = -1;
+	int conntectedClientSize;
 	char myMessage[256] = {};
 	Tga::Vector2f positsion;
-	std::vector<ClientTransform> myClientTransforms;
+	std::array<ClientTransform,4> myClientTransforms;
 };
