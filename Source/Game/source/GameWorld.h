@@ -11,11 +11,9 @@ public:
 	void Render(Tga::InputManager* aInput);
 	bool AskForName();
 	void IMGUIBOX();
-	
 
 private:
 	bool isFisrtMsg = true;
-	Tga::Sprite2DInstanceData myTGELogoInstance = {};
-	Tga::SpriteSharedData sharedData = {};
+
 
 };

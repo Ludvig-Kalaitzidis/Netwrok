@@ -19,6 +19,7 @@ struct ClientInfo
 	sockaddr_in address;
 	std::string name;
 	int clientId;
+	Tga::Vector2f positsion;
 	
 };
 void DeleteTheClient(const SOCKET& aServerSocket, const int aClientID);
@@ -132,6 +133,8 @@ void DeleteTheClient(const SOCKET& aServerSocket, const int aClientID)
 	//Display on server
 	std::cout << connectedClients[aClientID].name << " : Has Disconnected!" << endl;
 
+
+
 	//send the disconnect message to all connected clients
 	ChatMessage disconnectMessage;
 	std::string message = connectedClients[aClientID].name + " : Has Disconnected!";
@@ -159,6 +162,7 @@ void AddNewClient(const SOCKET& aServerSocket, const sockaddr_in& aClientAddress
 	static unsigned int clientID = 0;
 	newClientInfo.clientId = clientID;
 	newClientInfo.name = aClientMessage->GetClientMessage();
+	newClientInfo.positsion = Tga::Vector2f(0, 0);
 	std::cout << aClientMessage->GetClientMessage() << " is Online.. ID: " << clientID << std::endl;
 
 	connectedClients[clientID] = newClientInfo;
@@ -173,17 +177,26 @@ void AddNewClient(const SOCKET& aServerSocket, const sockaddr_in& aClientAddress
 	connectionInfo.SetMessage(messageToAllClients.c_str());
 	connectionInfo.SetID(clientID);
 	connectionInfo.SetState(MessageState::FirstSend);
+
+	std::vector<ClientTransform> allClients;
+	for (const auto& client:connectedClients)
+	{
+		ClientTransform clientTransform;
+		clientTransform.myID = client.second.clientId;
+		clientTransform.myPosition = client.second.positsion;
+		allClients.push_back(clientTransform);
+	}
+
+	connectionInfo.SetAllClients(allClients);
 	memcpy(NewClientBuffer, &connectionInfo, BUFFER_SIZE);
 
 	for (const auto& entry : connectedClients)
 	{
 		sendto(aServerSocket, NewClientBuffer, BUFFER_SIZE, 0, (sockaddr*)&entry.second.address, sizeof(entry.second.address));
 	}
+	
 
-	//char NewNewClientBuffer[BUFFER_SIZE];
-	//FirstMessage connectedClientsMessage;
-	//connectedClientsMessage.SetConnectedClients(connectedClients);
-	//sendto(aServerSocket, NewNewClientBuffer, BUFFER_SIZE, 0, (sockaddr*)&newClientInfo.address, sizeof(newClientInfo.address));
+	
 
 	clientID++;
 }

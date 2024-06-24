@@ -31,6 +31,11 @@ using namespace std;
 int globalID = -1;
 std::string inputText = "";
 std::vector<std::string> chatMessages;
+
+std::array<Tga::Sprite2DInstanceData, 4>  myTGELogoInstance = {};
+Tga::SpriteSharedData sharedData = {};
+
+
 SOCKET ClientSocket;
 sockaddr_in serverAddress;
 bool ResiveFromServer(const SOCKET& aServerScoket, const sockaddr_in& aServerAddress);
@@ -87,6 +92,10 @@ int Main(const std::string& name)
 		if ((MessageType)InBuffer[1] == MessageState::FirstSend)
 		{
 			globalID = serverMessage->GetClientID();
+			for (const auto& transform: serverMessage->GetAllClinets())
+			{
+				myTGELogoInstance[transform.myID].myPosition = transform.myPosition;
+			}
 			std::cout << "Client have connected" << std::endl;
 		}
 	}
@@ -111,14 +120,16 @@ void GameWorld::Init()
 
 	Tga::Vector2ui intResolution = engine.GetRenderSize();
 	Tga::Vector2f resolution = { (float)intResolution.x, (float)intResolution.y };
+
+	for (auto& instance : myTGELogoInstance)
 	{
 		sharedData.myTexture = engine.GetTextureManager().GetTexture(L"Sprites/tga_w.dds");
 
-		myTGELogoInstance.myPivot = { 0.5f, 0.5f };
-		myTGELogoInstance.myPosition = Tga::Vector2f{ 0.5f, 0.5f }*resolution;
-		myTGELogoInstance.mySize = Tga::Vector2f{ 0.75f, 0.75f }*resolution.y;
+		instance.myPivot = { 0.5f, 0.5f };
+		instance.myPosition = Tga::Vector2f{ 0.5f, 0.5f }*resolution;
+		instance.mySize = Tga::Vector2f{ 0.75f, 0.75f }*resolution.y;
 
-		myTGELogoInstance.myColor = Tga::Color(1, 1, 1, 1);
+		instance.myColor = Tga::Color(1, 1, 1, 1);
 	}
 
 }
@@ -136,12 +147,16 @@ void GameWorld::Render(Tga::InputManager* aInput)
 
 	auto& engine = *Tga::Engine::GetInstance();
 	Tga::SpriteDrawer& spriteDrawer(engine.GetGraphicsEngine().GetSpriteDrawer());
-	spriteDrawer.Draw(sharedData, myTGELogoInstance);
+
+	for (auto& instance : myTGELogoInstance)
+	{
+		spriteDrawer.Draw(sharedData, instance);
+	};
 
 	if (aInput->IsKeyPressed('W')|| aInput->IsKeyPressed('A') || aInput->IsKeyPressed('S') || aInput->IsKeyPressed('D'))
 	{
 		ChatMessage message;
-		message.SetPosition(myTGELogoInstance.myPosition);
+		message.SetPosition(myTGELogoInstance[globalID].myPosition);
 		message.SetID(globalID);
 		message.ChangeMessageType(ePositsionMessage);
 

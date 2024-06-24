@@ -17,6 +17,12 @@ enum MessageState :unsigned char
 	None
 };
 
+struct ClientTransform
+{
+	Tga::Vector2f myPosition;
+	int myID;
+};
+
 
 class NetMessage
 {
@@ -26,17 +32,6 @@ protected:
 	NetMessage() = default;
 };
 
-
-class FirstMessage : public NetMessage
-{
-public:
-	void SetConnectedClients(std::unordered_map<int, ClientInfo> allClients)
-	{
-		connectedClients = allClients;
-	}
-private:
-	std::unordered_map<int, ClientInfo> connectedClients;
-};
 
 class ChatMessage : public NetMessage
 {
@@ -57,6 +52,15 @@ public:
 	{
 		positsion = aPosition;
 	}
+	std::vector<ClientTransform> GetAllClinets()
+	{
+		return myClientTransforms;
+	}
+	void SetAllClients(const std::vector<ClientTransform>& aClients)
+	{
+		myClientTransforms = aClients;
+	}
+
 	void SetState(MessageState aState) { myState = aState; };
 	void ChangeMessageType(MessageType aMessageType) { myType = aMessageType; };
 	const char* GetClientMessage() const { return myMessage; };
@@ -66,4 +70,5 @@ private:
 	int myID = -1;
 	char myMessage[256] = {};
 	Tga::Vector2f positsion;
+	std::vector<ClientTransform> myClientTransforms;
 };
